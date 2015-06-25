@@ -1,0 +1,14 @@
+language: ruby
+rvm:
+  - ruby-head
+  - 2.2-head
+  - 2.1.1
+  - 1.9.3
+matrix:
+  allow_failures:
+    - rvm: ruby-head
+
+sudo: true
+before_script:
+  - sudo apt-get update -qq
+  - sudo apt-get install -y liblua5.1-dev

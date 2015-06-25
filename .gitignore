@@ -1,0 +1,8 @@
+/.idea
+/tmp
+*.gem
+Gemfile.lock
+.ruby-version
+.rspec_result
+
+
