@@ -56,4 +56,10 @@ Feature: Sandbox exposition
       | {"A", "B", "C"}     | ['A', 'B', 'C']  |
       | true                | true             |
 
+  Scenario: Calling Lua functions
+    Given an empty sandbox
+    And the following line as Lua script: return(string.upper('Hello'));
+    When I execute the script
+    Then it should return "HELLO"
+
 

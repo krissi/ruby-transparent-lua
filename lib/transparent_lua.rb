@@ -17,14 +17,15 @@ class TransparentLua
   attr_reader :sandbox, :state
 
   # @param [Object] sandbox The object which will be made visible to the lua script
-  # @param [Boolean] leak_locals When true, all locals from the lua scope are set in the sandbox.
-  #   The sandbox must store the values itself or an error will be raised.
-  #   When false the locals are not reflected in the sandbox
   # @param [Hash] options
   # @option options [Lua::State] :state (Lua::State.new) a lua state to use
-  def initialize(sandbox, leak_locals = false, options = {})
-    @sandbox = sandbox
-    @state   = options.fetch(:state) { Lua::State.new }
+  # @option options [Boolean] :leak_globals When true, all locals from the lua scope are set in the sandbox.
+  #   The sandbox must store the values itself or an error will be raised.
+  #   When false the locals are not reflected in the sandbox
+  def initialize(sandbox, options = {})
+    @sandbox         = sandbox
+    @state           = options.fetch(:state) { Lua::State.new }
+    leak_locals      = options.fetch(:leak_globals) { false }
     setup(leak_locals)
   end
 
@@ -36,18 +37,23 @@ class TransparentLua
   end
 
   private
-  def setup(leak_locals = false)
-    @state.__load_stdlib :all
-    @state.__env = getter_table(sandbox, !leak_locals)
+  def setup(leak_globals = false)
+    state.__load_stdlib :all
+
+    global_metatable               = {
+        '__index' => index_table(sandbox)
+    }
+    global_metatable['__newindex'] = newindex_table(sandbox) if leak_globals
+
+    state._G.__metatable = global_metatable
   end
 
-  def getter_table(object, readonly = false)
+  def getter_table(object)
     if SUPPORTED_SIMPLE_DATATYPES.include? object.class
       return object
     end
 
-    metatable               = { '__index' => index_table(object) }
-    metatable['__newindex'] = newindex_table(object) unless readonly
+    metatable = { '__index' => index_table(object) }
     metatable(metatable)
   end
 
@@ -82,6 +88,7 @@ class TransparentLua
     object.method(method_name.to_sym)
   end
 
+  # @param [Method] method
   def method_table(method)
     metatable(
         '__call' => ->(t, *args) do
