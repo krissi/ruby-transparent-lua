@@ -1,6 +1,12 @@
+# -*- encoding: utf-8 -*-
+lib = File.expand_path('../lib/', __FILE__)
+$:.unshift lib unless $:.include?(lib)
+
+require 'transparent_lua/version'
+
 Gem::Specification.new do |gem|
   gem.name          = 'transparent-lua'
-  gem.version       = '0.1'
+  gem.version       = TransparentLua::VERSION
   gem.authors       = ['Christian Haase']
   gem.email         = ['ruby@eggchamber.net']
   gem.description   = %q{A wrapper to pass complex objects between Ruby and Lua}
