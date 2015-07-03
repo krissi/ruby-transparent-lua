@@ -62,4 +62,15 @@ Feature: Sandbox exposition
     When I execute the script
     Then it should return "HELLO"
 
+  Scenario: Setting attributes of members
+    Given an empty sandbox
+    And the following code executed in the sandbox: def struct; @struct ||= Struct.new(:attr).new; end
+    And the following Lua script:
+    """
+    s = struct
+    s.attr = 'Hi'
+    """
+    When I execute the script
+    Then the result of @sandbox.struct.values should include('Hi')
+
 

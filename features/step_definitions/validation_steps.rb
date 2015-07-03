@@ -9,3 +9,8 @@ Then(/^the attribute "([^"]*)" of the sandbox is (.*)$/) do |attribute, expected
 
   expect(@sandbox.public_send(attribute.to_sym)).to eq(expected_return_value)
 end
+
+
+Then(/^the result of (.+) should (.*)$/) do |subject, expectation|
+  expect(instance_eval(String(subject))).to eval(expectation)
+end

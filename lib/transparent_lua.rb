@@ -23,9 +23,9 @@ class TransparentLua
   #   The sandbox must store the values itself or an error will be raised.
   #   When false the locals are not reflected in the sandbox
   def initialize(sandbox, options = {})
-    @sandbox         = sandbox
-    @state           = options.fetch(:state) { Lua::State.new }
-    leak_locals      = options.fetch(:leak_globals) { false }
+    @sandbox    = sandbox
+    @state      = options.fetch(:state) { Lua::State.new }
+    leak_locals = options.fetch(:leak_globals) { false }
     setup(leak_locals)
   end
 
@@ -53,7 +53,10 @@ class TransparentLua
       return object
     end
 
-    metatable = { '__index' => index_table(object) }
+    metatable = {
+        '__index'    => index_table(object),
+        '__newindex' => newindex_table(object),
+    }
     metatable(metatable)
   end
 

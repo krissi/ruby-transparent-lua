@@ -32,7 +32,7 @@ Given(/^an sandbox with an empty member class$/) do
   end
 end
 
-And(/^the following method definition as part of the sandbox: (.*)$/) do |method_definition|
+And(/^the following (?:method definition as part of|code executed in) the sandbox: (.*)$/) do |method_definition|
   @sandbox_class.class_eval(method_definition)
 end
 
@@ -44,4 +44,7 @@ And(/^the following line as Lua script: (.*)$/) do |script|
   @script = String(script).strip
 end
 
+And(/^the following Lua script:$/) do |script|
+  @script = String(script).strip
+end
 
