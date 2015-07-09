@@ -8,7 +8,7 @@ Feature: Sandbox exposition
     Then it should return "OK"
 
   Scenario Outline: Exposing member class methods to the lua script
-    Given an sandbox with an empty member class
+    Given a sandbox with an empty member class
     And the following method definition as part of the member class: def <method_signature>; <method_body>; end;
     And the following line as Lua script: return(<method_call>);
     When I execute the script
@@ -72,5 +72,15 @@ Feature: Sandbox exposition
     """
     When I execute the script
     Then the result of @sandbox.struct.values should include('Hi')
+
+  Scenario: Passing instances to methods as arguments
+    Given a sandbox with an empty member class
+    And the following code executed in the sandbox: def ret(param); param.inspect; end
+    And the following Lua script:
+    """
+    return(ret(member_class));
+    """
+    When I execute the script
+    Then it should return "#<Sandbox Member Class>"
 
 

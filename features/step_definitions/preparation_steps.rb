@@ -10,7 +10,7 @@ Given(/^an empty sandbox$/) do
   end
 end
 
-Given(/^an sandbox with an empty member class$/) do
+Given(/^an? sandbox with an empty member class$/) do
   @member_class = Class.new do
     def inspect
       '#<Sandbox Member Class>'

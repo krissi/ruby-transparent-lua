@@ -57,7 +57,7 @@ class TransparentLua
         '__index'    => index_table(object),
         '__newindex' => newindex_table(object),
     }
-    metatable(metatable)
+    delegation_table(object, metatable)
   end
 
   def newindex_table(object)
@@ -93,16 +93,25 @@ class TransparentLua
 
   # @param [Method] method
   def method_table(method)
-    metatable(
+    delegation_table(
         '__call' => ->(t, *args) do
-          getter_table(method.call(*args))
+          converted_args = args.collect do |arg|
+            case arg
+            when Lua::Table
+              ObjectSpace._id2ref(Integer(arg.__rb_object_id))
+            else
+              arg
+            end
+          end
+          getter_table(method.call(*converted_args))
         end
     )
   end
 
-  def metatable(hash)
-    tab             = Lua::Table.new(@state)
-    tab.__metatable = hash
+  def delegation_table(object = nil, hash)
+    tab                = Lua::Table.new(@state)
+    tab.__rb_object_id = -> { object.__id__ } if object
+    tab.__metatable    = hash
     tab
   end
 
