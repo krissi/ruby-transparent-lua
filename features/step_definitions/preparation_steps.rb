@@ -32,8 +32,10 @@ Given(/^an? sandbox with an empty member class$/) do
   end
 end
 
-And(/^the following (?:method definition as part of|code executed in) the sandbox: (.*)$/) do |method_definition|
-  @sandbox_class.class_eval(method_definition)
+And(/^the following (?:method definition as part of|code executed in) the sandbox: ?(.*)$/) do |*args|
+  inline_code, text_code = *args
+  code = String(text_code).empty? ? String(inline_code) : String(text_code)
+  @sandbox_class.class_eval(code)
 end
 
 And(/^the following method definition as part of the member class: (.*)$/) do |method_definition|

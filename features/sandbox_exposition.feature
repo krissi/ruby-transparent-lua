@@ -83,4 +83,27 @@ Feature: Sandbox exposition
     When I execute the script
     Then it should return "#<Sandbox Member Class>"
 
+  Scenario: Requiring virtual files
+    Given an empty sandbox
+    And the following code executed in the sandbox:
+    """
+      def can_require_module?(modname)
+        modname == 'virtual_module'
+      end
+
+      def require_module(modname)
+        <<-EOMOD
+          function virtual_function()
+            return('Virtual return value')
+          end
+        EOMOD
+      end
+    """
+    And the following Lua script:
+    """
+    require('virtual_module');
+    return(virtual_function());
+    """
+    When I execute the script
+    Then it should return "Virtual return value"
 

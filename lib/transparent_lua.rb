@@ -46,6 +46,33 @@ class TransparentLua
     global_metatable['__newindex'] = newindex_table(sandbox) if leak_globals
 
     state._G.__metatable = global_metatable
+
+    state.package.loaders    = Lua::Table.new(state)
+    state.package.loaders[1] = ->(modname) do
+      return "\n\tno module '#{modname}' available in sandbox" unless can_require_module? modname
+
+      loader = ->(modname) do
+        source = require_module(modname)
+        state.__eval(source, "=#{modname}")
+        true
+      end
+
+      state.package.loaded[modname] = loader
+      loader
+    end
+  end
+
+  def can_require_module?(modname)
+    return false unless sandbox.respond_to? :can_require_module?
+
+    sandbox.can_require_module? modname
+  end
+
+  def require_module(modname)
+    fail NoMethodError,
+         "#{sandbox} must respond to #require_module because it responds to #can_require_module?" unless sandbox.respond_to? :require_module
+
+    String(sandbox.require_module(modname))
   end
 
   def getter_table(object)
