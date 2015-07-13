@@ -115,7 +115,7 @@ class TransparentLua
   end
 
   def get_method(object, method_name)
-    fail NoMethodError, "#{object}##{method_name.to_s} is not a method (but might me a valid message which is not supported)" unless object.methods.include? method_name.to_sym
+    fail NoMethodError, "#{object}##{method_name.to_s} is not a method (but might be a valid message which is not supported)" unless object.methods.include? method_name.to_sym
     object.method(method_name.to_sym)
   end
 
