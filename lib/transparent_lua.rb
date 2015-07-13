@@ -30,9 +30,10 @@ class TransparentLua
   end
 
   # @param [String] script a lua script
+  # @param [String] script_name the name of the lua script (#see Lua::State.__eval)
   # @return [Object] the return value of the lua script
-  def call(script)
-    v = state.__eval script
+  def call(script, script_name = nil)
+    v = state.__eval(script, script_name)
     lua2rb(v)
   end
 
