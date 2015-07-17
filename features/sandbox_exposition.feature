@@ -83,6 +83,16 @@ Feature: Sandbox exposition
     When I execute the script
     Then it should return "#<Sandbox Member Class>"
 
+  Scenario: Passing plain lua tables to methods as arguments
+    Given an empty sandbox
+    And the following code executed in the sandbox: def ret(param); param.inspect; end
+    And the following Lua script:
+    """
+    return(ret({foo = "bar"}));
+    """
+    When I execute the script
+    Then it should return {'foo' => 'bar'}.inspect
+
   Scenario: Requiring virtual files
     Given an empty sandbox
     And the following code executed in the sandbox:
@@ -106,4 +116,5 @@ Feature: Sandbox exposition
     """
     When I execute the script
     Then it should return "Virtual return value"
+
 

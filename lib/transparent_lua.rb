@@ -124,13 +124,9 @@ class TransparentLua
     delegation_table(
         '__call' => ->(t, *args) do
           converted_args = args.collect do |arg|
-            case arg
-            when Lua::Table
-              ObjectSpace._id2ref(Integer(arg.__rb_object_id))
-            else
-              arg
-            end
+            lua2rb(arg)
           end
+
           getter_table(method.call(*converted_args))
         end
     )
@@ -145,6 +141,8 @@ class TransparentLua
 
   def lua2rb(v)
     case v
+    when ->(t) { has_rb_object_id?(t) }
+      ObjectSpace._id2ref(Integer(v.__rb_object_id))
     when ->(t) { Lua::Table === t && t.to_hash.keys.all? { |k| k.is_a? Numeric } }
       v.to_hash.values
     when Lua::Table
@@ -152,5 +150,12 @@ class TransparentLua
     else
       v
     end
+  end
+
+  def has_rb_object_id?(o)
+    o.__rb_object_id
+    true
+  rescue NoMethodError
+    false
   end
 end
