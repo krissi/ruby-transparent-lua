@@ -1,4 +1,5 @@
 require 'rlua'
+require 'logger'
 
 class TransparentLua
   SUPPORTED_SIMPLE_DATATYPES = [
@@ -14,7 +15,7 @@ class TransparentLua
       Array,
   ]
 
-  attr_reader :sandbox, :state
+  attr_reader :sandbox, :state, :logger
 
   # @param [Object] sandbox The object which will be made visible to the lua script
   # @param [Hash] options
@@ -25,6 +26,7 @@ class TransparentLua
   def initialize(sandbox, options = {})
     @sandbox    = sandbox
     @state      = options.fetch(:state) { Lua::State.new }
+    @logger     = options.fetch(:logger) { Logger.new('/dev/null') }
     leak_locals = options.fetch(:leak_globals) { false }
     setup(leak_locals)
   end
@@ -97,18 +99,14 @@ class TransparentLua
   def index_table(object)
     ->(t, k, *newindex_args) do
       method = get_method(object, k)
+      logger.debug { "Dispatching method #{method}(#{method.parameters})" }
 
       case method
       when ->(m) { m.arity == 0 }
-        # No or mandatory arguments
+        logger.debug { "Creating a getter table for #{method}" }
         getter_table(object.public_send(k.to_sym, *newindex_args))
-        # when ->(m) { m.parameters == [[:rest]] }
-        #   # Forced to be a method
-        #   method_table(method)
-        # when ->(m) { m.arity < 0 }
-        #   warn "Method #{method} has optional parameters. We dont like that"
-        #   method_table(method)
       else
+        logger.debug { "Creating a method table for #{method}" }
         method_table(method)
       end
     end
@@ -144,9 +142,9 @@ class TransparentLua
     when ->(t) { has_rb_object_id?(t) }
       ObjectSpace._id2ref(Integer(v.__rb_object_id))
     when ->(t) { Lua::Table === t && t.to_hash.keys.all? { |k| k.is_a? Numeric } }
-      v.to_hash.values
+      v.to_hash.values.collect { |v| lua2rb(v) }
     when Lua::Table
-      v.to_hash
+      v.to_hash.each_with_object({}) { |(k, v), h| h[lua2rb(k)] = lua2rb(v) }
     else
       v
     end
