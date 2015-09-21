@@ -149,6 +149,8 @@ class TransparentLua
       v.to_hash.values.collect { |v| lua2rb(v) }
     when Lua::Table
       v.to_hash.each_with_object({}) { |(k, v), h| h[lua2rb(k)] = lua2rb(v) }
+    when Float
+      (Integer(v) == v) ? Integer(v) : v
     else
       v
     end
