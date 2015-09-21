@@ -15,7 +15,7 @@ class TransparentLua
       Array,
   ]
 
-  attr_reader :sandbox, :state, :logger
+  attr_reader :sandbox, :state, :logger, :predicate_method_suffix
 
   # @param [Object] sandbox The object which will be made visible to the lua script
   # @param [Hash] options
@@ -24,10 +24,11 @@ class TransparentLua
   #   The sandbox must store the values itself or an error will be raised.
   #   When false the locals are not reflected in the sandbox
   def initialize(sandbox, options = {})
-    @sandbox    = sandbox
-    @state      = options.fetch(:state) { Lua::State.new }
-    @logger     = options.fetch(:logger) { Logger.new('/dev/null') }
-    leak_locals = options.fetch(:leak_globals) { false }
+    @sandbox                 = sandbox
+    @state                   = options.fetch(:state) { Lua::State.new }
+    @logger                  = options.fetch(:logger) { Logger.new('/dev/null') }
+    @predicate_method_suffix = options.fetch(:predicate_method_suffix) { '_huh' }
+    leak_locals              = options.fetch(:leak_globals) { false }
     setup(leak_locals)
   end
 
@@ -99,6 +100,7 @@ class TransparentLua
   def index_table(object)
     ->(t, k, *newindex_args) do
       method = get_method(object, k)
+      k = get_ruby_method_name(k)
       logger.debug { "Dispatching method #{method}(#{method.parameters})" }
 
       case method
@@ -113,6 +115,7 @@ class TransparentLua
   end
 
   def get_method(object, method_name)
+    method_name = get_ruby_method_name(method_name)
     fail NoMethodError, "#{object}##{method_name.to_s} is not a method (but might be a valid message which is not supported)" unless object.methods.include? method_name.to_sym
     object.method(method_name.to_sym)
   end
@@ -155,5 +158,17 @@ class TransparentLua
     true
   rescue NoMethodError
     false
+  end
+
+  # @param [Symbol] lua_method_name
+  # @return [Symbol] ruby method name
+  def get_ruby_method_name(lua_method_name)
+    lua_method_name = String(lua_method_name)
+    case lua_method_name
+    when /#{predicate_method_suffix}$/
+      return lua_method_name.gsub(/#{predicate_method_suffix}$/, '?').to_sym
+    else
+      return lua_method_name.to_sym
+    end
   end
 end
