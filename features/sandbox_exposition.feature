@@ -103,18 +103,22 @@ Feature: Sandbox exposition
 
       def require_module(modname)
         <<-EOMOD
-          function virtual_function()
+          local virtual_module = {}
+          function virtual_module.virtual_function()
             return('Virtual return value')
           end
+
+          return virtual_module
         EOMOD
       end
     """
     And the following Lua script:
     """
-    require('virtual_module');
-    return(virtual_function());
+    virtual_module = require('virtual_module');
+    return(virtual_module.virtual_function());
     """
     When I execute the script
     Then it should return "Virtual return value"
+
 
 

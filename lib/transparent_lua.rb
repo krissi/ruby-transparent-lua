@@ -58,7 +58,6 @@ class TransparentLua
       loader = ->(modname) do
         source = require_module(modname)
         state.__eval(source, "=#{modname}")
-        true
       end
 
       state.package.loaded[modname] = loader
