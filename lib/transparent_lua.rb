@@ -15,7 +15,7 @@ class TransparentLua
       Array,
   ]
 
-  attr_reader :sandbox, :state, :logger, :predicate_method_suffix
+  attr_reader :sandbox, :state, :logger
 
   # @param [Object] sandbox The object which will be made visible to the lua script
   # @param [Hash] options
@@ -27,7 +27,6 @@ class TransparentLua
     @sandbox                 = sandbox
     @state                   = options.fetch(:state) { Lua::State.new }
     @logger                  = options.fetch(:logger) { Logger.new('/dev/null') }
-    @predicate_method_suffix = options.fetch(:predicate_method_suffix) { '_huh' }
     leak_locals              = options.fetch(:leak_globals) { false }
     setup(leak_locals)
   end
@@ -167,8 +166,8 @@ class TransparentLua
   def get_ruby_method_name(lua_method_name)
     lua_method_name = String(lua_method_name)
     case lua_method_name
-    when /#{predicate_method_suffix}$/
-      return lua_method_name.gsub(/#{predicate_method_suffix}$/, '?').to_sym
+    when /^is_(.*)$/, /^(has_.*)$/
+      return :"#{$1}?"
     else
       return lua_method_name.to_sym
     end
