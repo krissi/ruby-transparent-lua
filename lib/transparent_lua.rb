@@ -134,7 +134,7 @@ class TransparentLua
 
   def delegation_table(object = nil, hash)
     tab                = Lua::Table.new(@state)
-    tab.__rb_object_id = -> { object.__id__ } if object
+    tab.__rb_object_id = -> { object.__id__.to_f } if object
     tab.__metatable    = hash
     tab
   end
