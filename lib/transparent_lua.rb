@@ -3,16 +3,14 @@ require 'logger'
 
 class TransparentLua
   SUPPORTED_SIMPLE_DATATYPES = [
-      NilClass,
-      TrueClass,
-      FalseClass,
-      Fixnum,
-      Bignum,
-      Float,
-      Proc,
-      String,
-      Hash,
-      Array,
+    NilClass,
+    TrueClass,
+    FalseClass,
+    Fixnum,
+    Bignum,
+    Float,
+    Proc,
+    String,
   ]
 
   attr_reader :sandbox, :state, :logger
@@ -44,7 +42,7 @@ class TransparentLua
     state.__load_stdlib :all
 
     global_metatable               = {
-        '__index' => index_table(sandbox)
+      '__index' => index_table(sandbox)
     }
     global_metatable['__newindex'] = newindex_table(sandbox) if leak_globals
 
@@ -78,13 +76,11 @@ class TransparentLua
   end
 
   def getter_table(object)
-    if SUPPORTED_SIMPLE_DATATYPES.include? object.class
-      return object
-    end
+    return object if is_supported_simple_datatype? object
 
     metatable = {
-        '__index'    => index_table(object),
-        '__newindex' => newindex_table(object),
+      '__index'    => index_table(object),
+      '__newindex' => newindex_table(object),
     }
     delegation_table(object, metatable)
   end
@@ -122,13 +118,13 @@ class TransparentLua
   # @param [Method] method
   def method_table(method)
     delegation_table(
-        '__call' => ->(t, *args) do
-          converted_args = args.collect do |arg|
-            lua2rb(arg)
-          end
-
-          getter_table(method.call(*converted_args))
+      '__call' => ->(t, *args) do
+        converted_args = args.collect do |arg|
+          lua2rb(arg)
         end
+
+        getter_table(method.call(*converted_args))
+      end
     )
   end
 
@@ -166,10 +162,17 @@ class TransparentLua
   def get_ruby_method_name(lua_method_name)
     lua_method_name = String(lua_method_name)
     case lua_method_name
-    when /^is_(.*)$/, /^(has_.*)$/
+    when /^is_(.*)$/, /^has_(.*)$/
       return :"#{$1}?"
     else
       return lua_method_name.to_sym
     end
+  end
+
+  def is_supported_simple_datatype?(object)
+    return true if SUPPORTED_SIMPLE_DATATYPES.include? object.class
+    return true if Array === object && object.all? { |i| is_supported_simple_datatype?(i) }
+    return true if Hash === object && object.keys.all? { |k| is_supported_simple_datatype?(k) } && object.values.all? { |v| is_supported_simple_datatype?(v) }
+    false
   end
 end
